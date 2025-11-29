@@ -22,7 +22,7 @@ import java.util.Map;
 // Proyecto hecho por Raul Alberto Guerrero Aguilar y Ramirez Sánchez Luis Eduardo para la materia de Graficación
 // Solución aplicada: Clases internas cambiadas a public para evitar errores de acceso.
 
-public class ProyectoGenaroEntregable extends GLJPanel implements GLEventListener, KeyListener, MouseMotionListener {
+public class ProyectoGraficacionAD25 extends GLJPanel implements GLEventListener, KeyListener, MouseMotionListener {
 
     private static final int FPS = 60;
 
@@ -271,7 +271,7 @@ public class ProyectoGenaroEntregable extends GLJPanel implements GLEventListene
             caps.setDepthBits(24);
 
             JFrame frame = new JFrame("SCP-173 - Final Game Logic");
-            ProyectoGenaroEntregable panel = new ProyectoGenaroEntregable(caps);
+            ProyectoGraficacionAD25 panel = new ProyectoGraficacionAD25(caps);
 
             frame.getContentPane().add(panel);
             frame.setSize(1280, 720);
@@ -293,7 +293,7 @@ public class ProyectoGenaroEntregable extends GLJPanel implements GLEventListene
         });
     }
 
-    public ProyectoGenaroEntregable(GLCapabilities caps) {
+    public ProyectoGraficacionAD25(GLCapabilities caps) {
         super(caps);
         setupTextureMap();
         this.addGLEventListener(this);

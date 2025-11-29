@@ -19,7 +19,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class SCP173ContencionVisualizer extends GLJPanel implements GLEventListener, KeyListener {
+public class SalaContencionVisualizer extends GLJPanel implements GLEventListener, KeyListener {
 
     private static final int FPS = 60;
     private final String MODEL_PATH = "./data/camaracontencion.obj";
@@ -70,7 +70,7 @@ public class SCP173ContencionVisualizer extends GLJPanel implements GLEventListe
             caps.setDepthBits(24);
 
             JFrame frame = new JFrame("SCP-173 Visualizer - Final Textures");
-            SCP173ContencionVisualizer panel = new SCP173ContencionVisualizer(caps);
+            SalaContencionVisualizer panel = new SalaContencionVisualizer(caps);
 
             frame.getContentPane().add(panel);
             frame.setSize(1280, 720);
@@ -91,7 +91,7 @@ public class SCP173ContencionVisualizer extends GLJPanel implements GLEventListe
         });
     }
 
-    public SCP173ContencionVisualizer(GLCapabilities caps) {
+    public SalaContencionVisualizer(GLCapabilities caps) {
         super(caps);
 
         // --- MAPEO DE TEXTURAS (Configurado por ti) ---
