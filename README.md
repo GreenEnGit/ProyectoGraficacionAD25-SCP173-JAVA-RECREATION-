@@ -1,0 +1,2 @@
+Este es nuestro proyecto de la materia graficación impartida en el ITV utilizando el lenguaje de java, donde recreamos la luz, modelado, y texturas del universo ficticio SCP, utilizando el juego como referencia (SCP Containtment Breach) para recrear el comportamiento de una de las anomalias (SCP173), usando java y jogl
+Proyecto hecho por Raul Alberto Guerrero Aguilar y Ramirez Sánchez Luis Eduardo
