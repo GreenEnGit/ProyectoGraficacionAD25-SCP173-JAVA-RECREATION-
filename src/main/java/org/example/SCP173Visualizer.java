@@ -14,42 +14,42 @@ import java.awt.event.WindowEvent;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-// CAMBIO 1: Nombre de la clase actualizado
 public class SCP173Visualizer extends GLJPanel implements GLEventListener, KeyListener {
 
     static {
         System.setProperty("sun.java2d.uiScale", "1");
-        // A veces es necesario probar con "true" o "false" en D3D si hay parpadeos
         System.setProperty("sun.java2d.d3d", "false");
     }
 
     private static final int FPS = 60;
 
-    // RUTAS (Asegúrate que siguen siendo correctas)
+    // --- RUTAS DE ARCHIVOS (Verifica que existan) ---
     private final String OBJ_PATH = "./data/173.obj";
-    //private final String TEX_BASE_PATH = "./data/173texture.jpg";
-    //private final String TEX_SPEC_PATH = "./data/173_spec.jpg";
-    //private final String TEX_NORM_PATH = "./data/173_norm.jpg";
+    private final String TEX_BASE_PATH = "./data/173texture.jpg";
+    private final String TEX_SPEC_PATH = "./data/173_spec.jpg";
+    // private final String TEX_NORM_PATH = "./data/173_norm.jpg"; // No usada en pipeline fijo
 
-    // Datos del Modelo
+    // --- DATOS DEL MODELO ---
     private List<float[]> vertices = new ArrayList<>();
     private List<float[]> textureCoords = new ArrayList<>();
     private List<float[]> normals = new ArrayList<>();
     private List<int[][]> faces = new ArrayList<>();
 
-    // Texturas
+    // --- TEXTURAS ---
     private Texture texBase;
     private Texture texSpec;
-    // private Texture texNorm; // No la usamos en este render simple sin shaders
 
-    // Cámara
+    // --- CÁMARA Y MOVIMIENTO ---
     private float rotateY = 0f;
     private float rotateX = 0f;
     private float zoom = -20.0f;
+
+    // --- ESTADOS DE LUZ ---
+    private boolean flashlightOn = true;  // Linterna empieza ENCENDIDA
+    private boolean roomLightOn = false;  // Luz ambiente empieza APAGADA
 
     private static FPSAnimator animator;
 
@@ -60,10 +60,7 @@ public class SCP173Visualizer extends GLJPanel implements GLEventListener, KeyLi
             caps.setHardwareAccelerated(true);
             caps.setDoubleBuffered(true);
 
-            // CAMBIO 2: Nombre de la ventana actualizado
-            JFrame frame = new JFrame("SCP173Visualizer");
-
-            // CAMBIO 3: Instanciamos la clase con el nuevo nombre
+            JFrame frame = new JFrame("SCP-173 Visualizer - [F] Linterna | [L] Luz Sala");
             SCP173Visualizer panel = new SCP173Visualizer(caps);
 
             frame.getContentPane().add(panel);
@@ -85,7 +82,6 @@ public class SCP173Visualizer extends GLJPanel implements GLEventListener, KeyLi
         });
     }
 
-    // Constructor actualizado con el nuevo nombre
     public SCP173Visualizer(GLCapabilities caps) {
         super(caps);
         this.addGLEventListener(this);
@@ -98,26 +94,43 @@ public class SCP173Visualizer extends GLJPanel implements GLEventListener, KeyLi
     public void init(GLAutoDrawable drawable) {
         GL2 gl = drawable.getGL().getGL2();
 
-        gl.glClearColor(0.1f, 0.1f, 0.12f, 1.0f);
+        // Fondo muy oscuro para resaltar la linterna
+        gl.glClearColor(0.02f, 0.02f, 0.05f, 1.0f);
         gl.glClearDepth(1.0f);
+
         gl.glEnable(GL2.GL_DEPTH_TEST);
         gl.glDepthFunc(GL2.GL_LEQUAL);
         gl.glHint(GL2.GL_PERSPECTIVE_CORRECTION_HINT, GL2.GL_NICEST);
         gl.glShadeModel(GL2.GL_SMOOTH);
 
-        // Iluminación
+        // --- CONFIGURACIÓN DE ILUMINACIÓN ---
         gl.glEnable(GL2.GL_LIGHTING);
-        gl.glEnable(GL2.GL_LIGHT0);
-        float[] lightPos = {5.0f, 10.0f, 20.0f, 1.0f};
-        float[] lightColor = {1.0f, 0.98f, 0.95f, 1.0f};
-        gl.glLightfv(GL2.GL_LIGHT0, GL2.GL_POSITION, lightPos, 0);
-        gl.glLightfv(GL2.GL_LIGHT0, GL2.GL_DIFFUSE, lightColor, 0);
 
-        // Cargar texturas
-        // texBase = loadTexture(gl, TEX_BASE_PATH);
-        // texSpec = loadTexture(gl, TEX_SPEC_PATH);
-        // texNorm = loadTexture(gl, TEX_NORM_PATH);
+        // CONFIG: LUZ 0 (Ambiente General)
+        float[] ambientLightColor = {0.3f, 0.3f, 0.3f, 1.0f}; // Luz tenue
+        float[] ambientPos = {0.0f, 10.0f, 0.0f, 1.0f};      // Desde arriba
+        gl.glLightfv(GL2.GL_LIGHT0, GL2.GL_DIFFUSE, ambientLightColor, 0);
+        gl.glLightfv(GL2.GL_LIGHT0, GL2.GL_POSITION, ambientPos, 0);
 
+        // CONFIG: LUZ 1 (Linterna / Spotlight)
+        float[] flashDiffuse = {1.0f, 0.98f, 0.85f, 1.0f}; // Color cálido brillante
+        float[] flashSpecular = {1.0f, 1.0f, 1.0f, 1.0f};
+
+        gl.glLightfv(GL2.GL_LIGHT1, GL2.GL_DIFFUSE, flashDiffuse, 0);
+        gl.glLightfv(GL2.GL_LIGHT1, GL2.GL_SPECULAR, flashSpecular, 0);
+
+        // Parámetros del Cono (Spotlight)
+        gl.glLightf(GL2.GL_LIGHT1, GL2.GL_SPOT_CUTOFF, 20.0f);   // Ángulo de apertura (estrecho)
+        gl.glLightf(GL2.GL_LIGHT1, GL2.GL_SPOT_EXPONENT, 10.0f); // Intensidad en el centro
+
+        // Atenuación de la linterna (se debilita con la distancia)
+        gl.glLightf(GL2.GL_LIGHT1, GL2.GL_CONSTANT_ATTENUATION, 1.0f);
+        gl.glLightf(GL2.GL_LIGHT1, GL2.GL_LINEAR_ATTENUATION, 0.05f);
+        gl.glLightf(GL2.GL_LIGHT1, GL2.GL_QUADRATIC_ATTENUATION, 0.0f);
+
+        // Cargar recursos
+        texBase = loadTexture(gl, TEX_BASE_PATH);
+        texSpec = loadTexture(gl, TEX_SPEC_PATH);
         loadObjFile(OBJ_PATH);
     }
 
@@ -131,6 +144,8 @@ public class SCP173Visualizer extends GLJPanel implements GLEventListener, KeyLi
                 t.setTexParameteri(gl, GL2.GL_TEXTURE_WRAP_S, GL2.GL_REPEAT);
                 t.setTexParameteri(gl, GL2.GL_TEXTURE_WRAP_T, GL2.GL_REPEAT);
                 return t;
+            } else {
+                System.err.println("Textura no encontrada: " + path);
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -171,32 +186,71 @@ public class SCP173Visualizer extends GLJPanel implements GLEventListener, KeyLi
         gl.glClear(GL2.GL_COLOR_BUFFER_BIT | GL2.GL_DEPTH_BUFFER_BIT);
         gl.glLoadIdentity();
 
+        // ==========================================
+        //         LÓGICA DE LA LINTERNA
+        // ==========================================
+
+        // 1. Control Luz Ambiente
+        if (roomLightOn) gl.glEnable(GL2.GL_LIGHT0);
+        else gl.glDisable(GL2.GL_LIGHT0);
+
+        // 2. Control Linterna
+        if (flashlightOn) {
+            gl.glEnable(GL2.GL_LIGHT1);
+            // La luz se coloca en (0,0,0) ANTES de mover el mundo.
+            // Esto hace que la luz esté pegada a la "cámara".
+            float[] lightPos = {0.0f, 0.0f, 0.0f, 1.0f};
+            float[] spotDir = {0.0f, 0.0f, -1.0f}; // Apunta hacia el fondo (donde vemos)
+
+            gl.glLightfv(GL2.GL_LIGHT1, GL2.GL_POSITION, lightPos, 0);
+            gl.glLightfv(GL2.GL_LIGHT1, GL2.GL_SPOT_DIRECTION, spotDir, 0);
+        } else {
+            gl.glDisable(GL2.GL_LIGHT1);
+        }
+
+        // ==========================================
+        //       TRANSFORMACIÓN DEL MODELO
+        // ==========================================
         gl.glTranslatef(0.0f, -8.0f, zoom);
         gl.glRotatef(rotateX, 1.0f, 0.0f, 0.0f);
         gl.glRotatef(rotateY, 0.0f, 1.0f, 0.0f);
 
-        // MULTI-TEXTURA
+        // Configuración de Material
+        float[] matAmbient = {0.2f, 0.2f, 0.2f, 1.0f};
+        float[] matDiffuse = {1.0f, 1.0f, 1.0f, 1.0f}; // Blanco para reflejar la textura
+        float[] matSpecular = {0.5f, 0.5f, 0.5f, 1.0f};
+        float matShininess = 50.0f;
+
+        gl.glMaterialfv(GL2.GL_FRONT, GL2.GL_AMBIENT, matAmbient, 0);
+        gl.glMaterialfv(GL2.GL_FRONT, GL2.GL_DIFFUSE, matDiffuse, 0);
+        gl.glMaterialfv(GL2.GL_FRONT, GL2.GL_SPECULAR, matSpecular, 0);
+        gl.glMaterialf(GL2.GL_FRONT, GL2.GL_SHININESS, matShininess);
+
+        // ==========================================
+        //             DIBUJO DEL MODELO
+        // ==========================================
 
         // Capa 0: Base
         gl.glActiveTexture(GL2.GL_TEXTURE0);
         if (texBase != null) {
             gl.glEnable(GL2.GL_TEXTURE_2D);
             texBase.bind(gl);
+            // MODULATE: Mezcla el color de la textura con la luz (linterna)
             gl.glTexEnvi(GL2.GL_TEXTURE_ENV, GL2.GL_TEXTURE_ENV_MODE, GL2.GL_MODULATE);
         }
 
-        // Capa 1: Spec/Rostro (se suma sobre la base)
+        // Capa 1: Specular
         gl.glActiveTexture(GL2.GL_TEXTURE1);
         if (texSpec != null) {
             gl.glEnable(GL2.GL_TEXTURE_2D);
             texSpec.bind(gl);
-            // Usamos GL_ADD para que las partes claras del spec "brillen" sobre la base
+            // ADD: Suma brillo en zonas específicas
             gl.glTexEnvi(GL2.GL_TEXTURE_ENV, GL2.GL_TEXTURE_ENV_MODE, GL2.GL_ADD);
         } else {
             gl.glDisable(GL2.GL_TEXTURE_2D);
         }
 
-        gl.glColor3f(1.0f, 1.0f, 1.0f);
+        gl.glColor3f(1.0f, 1.0f, 1.0f); // Color base blanco para no teñir la textura
 
         gl.glBegin(GL2.GL_TRIANGLES);
         for (int[][] face : faces) {
@@ -209,7 +263,7 @@ public class SCP173Visualizer extends GLJPanel implements GLEventListener, KeyLi
         }
         gl.glEnd();
 
-        // Limpieza
+        // Limpieza de estados
         gl.glActiveTexture(GL2.GL_TEXTURE1);
         gl.glDisable(GL2.GL_TEXTURE_2D);
         gl.glActiveTexture(GL2.GL_TEXTURE0);
@@ -221,24 +275,23 @@ public class SCP173Visualizer extends GLJPanel implements GLEventListener, KeyLi
     }
 
     private void drawVertex(GL2 gl, int[] pointData) {
+        // Normales (Crucial para que la luz funcione)
         if (pointData[2] >= 0 && pointData[2] < normals.size()) {
             float[] n = normals.get(pointData[2]);
             gl.glNormal3f(n[0], n[1], n[2]);
         }
 
+        // Texturas
         if (pointData[1] >= 0 && pointData[1] < textureCoords.size()) {
             float[] t = textureCoords.get(pointData[1]);
             float u = t[0];
-
-            // CAMBIO 4: ARREGLO DE TEXTURA INVERTIDA
-            // Hemos quitado el "1.0f - t[1]" y usamos t[1] directo.
-            // Si antes se veía mal, ahora debería verse bien.
-            float v = t[1];
+            float v = t[1]; // Ajuste de coordenadas si es necesario
 
             gl.glMultiTexCoord2f(GL2.GL_TEXTURE0, u, v);
             gl.glMultiTexCoord2f(GL2.GL_TEXTURE1, u, v);
         }
 
+        // Posición
         if (pointData[0] >= 0 && pointData[0] < vertices.size()) {
             float[] pos = vertices.get(pointData[0]);
             gl.glVertex3f(pos[0], pos[1], pos[2]);
@@ -266,12 +319,19 @@ public class SCP173Visualizer extends GLJPanel implements GLEventListener, KeyLi
     @Override
     public void keyPressed(KeyEvent e) {
         int k = e.getKeyCode();
+
+        // Movimiento Cámara / Modelo
         if (k == KeyEvent.VK_LEFT) rotateY -= 5;
         if (k == KeyEvent.VK_RIGHT) rotateY += 5;
         if (k == KeyEvent.VK_UP) zoom += 1;
         if (k == KeyEvent.VK_DOWN) zoom -= 1;
         if (k == KeyEvent.VK_W) rotateX -= 5;
         if (k == KeyEvent.VK_S) rotateX += 5;
+
+        // ACCIONES
+        if (k == KeyEvent.VK_F) flashlightOn = !flashlightOn; // Linterna
+        if (k == KeyEvent.VK_L) roomLightOn = !roomLightOn;   // Luz Sala
+
         if (k == KeyEvent.VK_ESCAPE) System.exit(0);
     }
     @Override public void keyReleased(KeyEvent e) {}
