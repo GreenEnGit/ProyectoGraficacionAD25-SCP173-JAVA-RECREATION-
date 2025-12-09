@@ -1,0 +1,14 @@
+Subject: [PATCH] Creditos
+---
+Index: README.md
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/README.md b/README.md
+new file mode 100644
+--- /dev/null	(revision 07d63914a536657baf016594187130a5d0d8400e)
++++ b/README.md	(revision 07d63914a536657baf016594187130a5d0d8400e)
+@@ -0,0 +1,2 @@
++Este es nuestro proyecto de la materia graficación impartida en el ITV utilizando el lenguaje de java, donde recreamos la luz, modelado, y texturas del universo ficticio SCP, utilizando el juego como referencia (SCP Containtment Breach) para recrear el comportamiento de una de las anomalias (SCP173), usando java y jogl
++Proyecto hecho por Raul Alberto Guerrero Aguilar y Ramirez Sánchez Luis Eduardo
