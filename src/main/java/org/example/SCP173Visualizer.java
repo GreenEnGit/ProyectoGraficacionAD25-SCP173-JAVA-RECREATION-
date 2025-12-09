@@ -116,7 +116,7 @@ public class SCP173Visualizer extends GLJPanel implements GLEventListener, KeyLi
         // Cargar texturas
         // texBase = loadTexture(gl, TEX_BASE_PATH);
         // texSpec = loadTexture(gl, TEX_SPEC_PATH);
-        // texNorm = loadTexture(gl, TEX_NORM_PATH); // Opcional si no usas shaders
+        // texNorm = loadTexture(gl, TEX_NORM_PATH);
 
         loadObjFile(OBJ_PATH);
     }
@@ -175,7 +175,7 @@ public class SCP173Visualizer extends GLJPanel implements GLEventListener, KeyLi
         gl.glRotatef(rotateX, 1.0f, 0.0f, 0.0f);
         gl.glRotatef(rotateY, 0.0f, 1.0f, 0.0f);
 
-        // --- MULTI-TEXTURA ---
+        // MULTI-TEXTURA
 
         // Capa 0: Base
         gl.glActiveTexture(GL2.GL_TEXTURE0);
