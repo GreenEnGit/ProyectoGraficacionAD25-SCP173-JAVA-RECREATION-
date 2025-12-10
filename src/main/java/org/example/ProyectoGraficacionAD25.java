@@ -54,6 +54,8 @@ public class ProyectoGraficacionAD25 extends GLJPanel implements GLEventListener
     private final float ESPACIO_JUGADOR = 0.1f;
 
     private boolean modoEspectador = false;
+    // MODO INMORTAL
+    private boolean modoInmortal = false;
 
     // CONFIGURACION DE LUCES
     private boolean estadoLinterna = true;
@@ -454,25 +456,59 @@ public class ProyectoGraficacionAD25 extends GLJPanel implements GLEventListener
         tiempoParpadeoActual = 0f;
         parpadeoForzado = false;
 
+        // Distancia a la que el SCP se detiene en modo inmortal
+        float distanciaSeguraInmortal = DISTANCIA_MUERTE + 0.8f; // <-- puedes ajustar este valor
+
         for (int i = 0; i < vecesAvanceSCP; i++) {
             float dx = camX - scp173.x;
             float dz = camZ - scp173.z;
             float distancia = (float) Math.sqrt(dx * dx + dz * dz);
 
-            if (distancia < DISTANCIA_MUERTE) { muerte = true; return; }
+            // Si NO eres inmortal y entra en distancia de muerte -> te mata
+            if (!modoInmortal && distancia < DISTANCIA_MUERTE) {
+                muerte = true;
+                return;
+            }
+
             if (distancia == 0.0f) return;
 
-            float avance = Math.min(distancia, SCP_MOVIMIENTO_DISTANCIA);
+            // -------------------------------------------------
+            // Cálculo del avance dependiendo del modo inmortal
+            // -------------------------------------------------
+            float avanceMaximo = SCP_MOVIMIENTO_DISTANCIA;
+
+            if (modoInmortal) {
+                // Si ya está a distancia "cómoda", no se sigue pegando
+                if (distancia <= distanciaSeguraInmortal) {
+                    // Ya suficientemente cerca para asustar, pero no encima
+                    continue;
+                }
+
+                // Solo avanzamos lo necesario para acercarnos HASTA la distancia segura
+                float distanciaHastaSegura = distancia - distanciaSeguraInmortal;
+                avanceMaximo = Math.min(avanceMaximo, distanciaHastaSegura);
+            }
+
+            float avance = Math.min(distancia, avanceMaximo);
             float moveX = (dx / distancia) * avance;
             float moveZ = (dz / distancia) * avance;
 
             scp173.actualizarPosicion(scp173.x + moveX, scp173.z + moveZ, camX, camZ);
 
-            float nuevaDist = (float) Math.sqrt((camX - scp173.x) * (camX - scp173.x) + (camZ - scp173.z) * (camZ - scp173.z));
-            if (nuevaDist < DISTANCIA_MUERTE) { muerte = true; return; }
+            float nuevaDist = (float) Math.sqrt(
+                    (camX - scp173.x) * (camX - scp173.x) +
+                            (camZ - scp173.z) * (camZ - scp173.z)
+            );
+
+            // Segundo chequeo de muerte SOLO si no eres inmortal
+            if (!modoInmortal && nuevaDist < DISTANCIA_MUERTE) {
+                muerte = true;
+                return;
+            }
         }
     }
 
+    
     private void dibujarMenu(GLAutoDrawable drawable) {
         GL2 gl = drawable.getGL().getGL2();
         int width = drawable.getSurfaceWidth();
@@ -700,12 +736,18 @@ public class ProyectoGraficacionAD25 extends GLJPanel implements GLEventListener
     }
 
     private boolean checkSCPCollision(float targetX, float targetZ) {
-        if (scp173 == null) return false;
-        float playerMinX = targetX - ESPACIO_JUGADOR; float playerMaxX = targetX + ESPACIO_JUGADOR;
-        float playerMinZ = targetZ - ESPACIO_JUGADOR; float playerMaxZ = targetZ + ESPACIO_JUGADOR;
+        // En modo inmortal NO hay colisión con el SCP
+        if (modoInmortal || scp173 == null) return false;
+
+        float playerMinX = targetX - ESPACIO_JUGADOR;
+        float playerMaxX = targetX + ESPACIO_JUGADOR;
+        float playerMinZ = targetZ - ESPACIO_JUGADOR;
+        float playerMaxZ = targetZ + ESPACIO_JUGADOR;
+
         return playerMaxX > scp173.minWorldX && playerMinX < scp173.maxWorldX &&
                 playerMaxZ > scp173.minWorldZ && playerMinZ < scp173.maxWorldZ;
     }
+
 
     private void handleMovement() {
         if (enMenu || parpadeo || muerte) return;
@@ -982,12 +1024,14 @@ public class ProyectoGraficacionAD25 extends GLJPanel implements GLEventListener
         if (e.getKeyCode() == KeyEvent.VK_N) modoEspectador = !modoEspectador;
         if (e.getKeyCode() == KeyEvent.VK_F) { estadoLinterna = !estadoLinterna; if (estadoLinterna) luzGlobal = false; }
         if (e.getKeyCode() == KeyEvent.VK_L) { luzGlobal = !luzGlobal; if (luzGlobal) estadoLinterna = false; }
+        if (e.getKeyCode() == KeyEvent.VK_I) { modoInmortal = !modoInmortal; }  // <<--- AQUÍ
         if (e.getKeyCode() == KeyEvent.VK_SPACE && !parpadeo && !muerte) {
             parpadeoForzado = false;
             nivelBarraParpadeo = NIVELES_BARRA_PARPADEO;
             tiempoAcumuladoBarra = 0;
             pestaneo();
         }
+
         if (e.getKeyCode() == KeyEvent.VK_ESCAPE) System.exit(0);
     }
 
@@ -997,6 +1041,7 @@ public class ProyectoGraficacionAD25 extends GLJPanel implements GLEventListener
     @Override
     public void mouseMoved(MouseEvent e) {
         if (isRobotMoving || centrado == null || parpadeo || muerte || enMenu) return;
+
         int dx = e.getXOnScreen() - centrado.x; int dy = e.getYOnScreen() - centrado.y;
         if (dx == 0 && dy == 0) return;
         viewAngleY += dx * sensibilidadMouse; viewAngleX += dy * sensibilidadMouse;

@@ -30,7 +30,7 @@ public class SCP173Visualizer extends GLJPanel implements GLEventListener, KeyLi
     private final String OBJ_PATH = "./data/173.obj";
     private final String TEX_BASE_PATH = "./data/173texture.jpg";
     private final String TEX_SPEC_PATH = "./data/173_spec.jpg";
-    // private final String TEX_NORM_PATH = "./data/173_norm.jpg"; // No usada en pipeline fijo
+    private final String TEX_NORM_PATH = "./data/173_norm.jpg"; // No usada en pipeline fijo
 
     // --- DATOS DEL MODELO ---
     private List<float[]> vertices = new ArrayList<>();
@@ -333,6 +333,7 @@ public class SCP173Visualizer extends GLJPanel implements GLEventListener, KeyLi
         if (k == KeyEvent.VK_L) roomLightOn = !roomLightOn;   // Luz Sala
 
         if (k == KeyEvent.VK_ESCAPE) System.exit(0);
+
     }
     @Override public void keyReleased(KeyEvent e) {}
     @Override public void keyTyped(KeyEvent e) {}
