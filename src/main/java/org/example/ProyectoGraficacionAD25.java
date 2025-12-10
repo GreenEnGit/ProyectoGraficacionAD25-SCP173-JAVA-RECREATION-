@@ -23,6 +23,7 @@ import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
 
 // Proyecto Graficación - SCP 173
+// Proyecto hecho por Raul Alberto Guerrero Aguilar (GreenEnGit) y Ramirez Sánchez Luis Eduardo (Arthyrom596)
 // Mejoras aplicadas: Delta Time, Niebla, Iluminación Dinámica.
 
 public class ProyectoGraficacionAD25 extends GLJPanel implements GLEventListener, KeyListener, MouseMotionListener {
@@ -865,6 +866,7 @@ public class ProyectoGraficacionAD25 extends GLJPanel implements GLEventListener
     private void drawHUD(int width, int height) {
         GL2 gl = GLContext.getCurrentGL().getGL2();
 
+        // 1. Si estás parpadeando, pantalla negra y salir (no dibujar texto)
         if (parpadeo) {
             gl.glMatrixMode(GL2.GL_PROJECTION); gl.glPushMatrix(); gl.glLoadIdentity();
             gl.glOrtho(0, width, 0, height, -1, 1);
@@ -880,7 +882,6 @@ public class ProyectoGraficacionAD25 extends GLJPanel implements GLEventListener
 
             gl.glPopMatrix(); gl.glMatrixMode(GL2.GL_PROJECTION); gl.glPopMatrix(); gl.glMatrixMode(GL2.GL_MODELVIEW);
 
-            // [MEJORA] Lógica de tiempo de parpadeo
             tiempoParpadeoActual += deltaTime;
             if (tiempoParpadeoActual >= duracionParpadeoObjetivo) {
                 parpadeo = false;
@@ -888,14 +889,31 @@ public class ProyectoGraficacionAD25 extends GLJPanel implements GLEventListener
             return;
         }
 
+        // 2. Dibujar Texto (Instrucciones)
         textRenderer.beginRendering(width, height);
-        if (modoEspectador) { textRenderer.setColor(Color.RED); textRenderer.draw("MODO FANTASMA (NOCLIP) ACTIVADO", width / 2 - 100, height - 80); }
+
+        // Avisos especiales
+        if (modoEspectador) {
+            textRenderer.setColor(Color.RED);
+            textRenderer.draw("MODO FANTASMA (NOCLIP) ACTIVADO", width / 2 - 100, height - 80);
+        }
+
         textRenderer.setColor(Color.GREEN);
-        textRenderer.draw(String.format("FPS: %.0f", 1.0f/deltaTime), 10, height - 20); // Mostrar FPS reales
-        textRenderer.draw("[ESPACIO] Parpadear", 10, height - 60);
+
+        // FPS
+        textRenderer.draw(String.format("FPS: %.0f", 1.0f/deltaTime), 10, height - 20);
+
+        // Controles Principales
+        textRenderer.draw("[ESPACIO] Parpadear", 10, height - 50);
+
+        // Estados de las teclas (F, L, I)
         textRenderer.draw("[F] Linterna: " + (estadoLinterna ? "ON" : "OFF"), 10, height - 80);
+        textRenderer.draw("[L] Luz Global: " + (luzGlobal ? "ON" : "OFF"), 10, height - 100);
+        textRenderer.draw("[I] Inmortal: " + (modoInmortal ? "ON" : "OFF"), 10, height - 120);
+
         textRenderer.endRendering();
 
+        // 3. Dibujar la Barra de Parpadeo (imágenes)
         if (texturasBarraParpadeo != null && nivelBarraParpadeo >= 1 && nivelBarraParpadeo <= NIVELES_BARRA_PARPADEO && texturasBarraParpadeo[nivelBarraParpadeo] != null) {
             Texture t = texturasBarraParpadeo[nivelBarraParpadeo];
             int barWidth = t.getImageWidth(); int barHeight = t.getImageHeight();
